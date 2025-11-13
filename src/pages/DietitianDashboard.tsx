@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Users, BookOpen, FileText, Leaf, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
-const Dashboard = () => {
+const DietitianDashboard = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -86,7 +86,7 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
-              Welcome, {profile?.full_name || "Practitioner"}
+              Welcome, Dr. {profile?.full_name || "Practitioner"}
             </span>
             <Button variant="outline" size="sm" onClick={handleSignOut}>
               <LogOut className="h-4 w-4 mr-2" />
@@ -98,7 +98,7 @@ const Dashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-foreground mb-2">Dashboard</h2>
+          <h2 className="text-3xl font-bold text-foreground mb-2">Dietitian Dashboard</h2>
           <p className="text-muted-foreground">Manage your practice with Ayurvedic precision</p>
         </div>
 
@@ -121,7 +121,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.dietCharts}</div>
-              <p className="text-xs text-muted-foreground mt-1">Total diet plans created</p>
+              <p className="text-xs text-muted-foreground mt-1">Created meal plans</p>
             </CardContent>
           </Card>
 
@@ -141,14 +141,14 @@ const Dashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle>Patient Management</CardTitle>
-              <CardDescription>Manage patient profiles and health records</CardDescription>
+              <CardDescription>Manage your patient database</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2">
               <Button className="w-full" onClick={() => navigate("/patients")}>
-                <Users className="h-4 w-4 mr-2" />
+                <Users className="mr-2 h-4 w-4" />
                 View All Patients
               </Button>
-              <Button variant="outline" className="w-full" onClick={() => navigate("/patients/new")}>
+              <Button className="w-full" variant="outline" onClick={() => navigate("/patients/new")}>
                 Add New Patient
               </Button>
             </CardContent>
@@ -157,15 +157,25 @@ const Dashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle>Food Database</CardTitle>
-              <CardDescription>Browse and manage Ayurvedic food database</CardDescription>
+              <CardDescription>Browse Ayurvedic food properties</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent>
               <Button className="w-full" onClick={() => navigate("/foods")}>
-                <BookOpen className="h-4 w-4 mr-2" />
-                Browse Food Database
+                <BookOpen className="mr-2 h-4 w-4" />
+                View Food Database
               </Button>
-              <Button variant="outline" className="w-full" onClick={() => navigate("/diet-charts/new")}>
-                Create Diet Chart
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>Create Diet Chart</CardTitle>
+              <CardDescription>Design personalized Ayurvedic meal plans</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full" onClick={() => navigate("/diet-charts/new")}>
+                <FileText className="mr-2 h-4 w-4" />
+                Create New Diet Chart
               </Button>
             </CardContent>
           </Card>
@@ -175,4 +185,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default DietitianDashboard;

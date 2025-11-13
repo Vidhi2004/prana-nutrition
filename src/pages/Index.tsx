@@ -8,11 +8,26 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/dashboard");
+        // Get user role and redirect to appropriate dashboard
+        const { data: userRole } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .single();
+
+        if (userRole?.role === "admin") {
+          navigate("/admin");
+        } else if (userRole?.role === "dietitian") {
+          navigate("/dashboard");
+        } else if (userRole?.role === "patient") {
+          navigate("/patient");
+        }
       }
-    });
+    };
+    checkSession();
   }, [navigate]);
 
   return (
