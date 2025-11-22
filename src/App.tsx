@@ -11,6 +11,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import PatientDashboard from "./pages/PatientDashboard";
 import Patients from "./pages/Patients";
 import NewPatient from "./pages/NewPatient";
+import PatientDetail from "./pages/PatientDetail";
 import Foods from "./pages/Foods";
 import DietChartNew from "./pages/DietChartNew";
 import NotFound from "./pages/NotFound";
@@ -59,6 +60,14 @@ const App = () => (
             element={
               <RoleBasedRoute allowedRoles={["dietitian", "admin"]}>
                 <NewPatient />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/patients/:id"
+            element={
+              <RoleBasedRoute allowedRoles={["dietitian", "admin"]}>
+                <PatientDetail />
               </RoleBasedRoute>
             }
           />
