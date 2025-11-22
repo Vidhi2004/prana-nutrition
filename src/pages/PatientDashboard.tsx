@@ -30,12 +30,12 @@ const PatientDashboard = () => {
         .single();
       setProfile(profileData);
 
-      // Load patient record (if exists)
+      // Load patient record (if exists) - match by email or contact number
       const { data: patientData } = await supabase
         .from("patients")
         .select("*")
-        .eq("email", profileData?.contact_number)
-        .single();
+        .or(`email.eq.${user.email},contact_number.eq.${profileData?.contact_number}`)
+        .maybeSingle();
       setPatientRecord(patientData);
 
       // Load diet charts
