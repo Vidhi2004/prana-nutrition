@@ -319,6 +319,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_patient_owner: {
+        Args: { _patient_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "dietitian" | "patient"
