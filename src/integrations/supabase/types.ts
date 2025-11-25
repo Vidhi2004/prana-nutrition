@@ -123,8 +123,10 @@ export type Database = {
           cuisine_type: string | null
           description: string | null
           digestibility: Database["public"]["Enums"]["digestibility"]
+          dosha_effects: Json | null
           fat_g: number | null
           fiber_g: number | null
+          guna: string[] | null
           id: string
           iron_mg: number | null
           is_active: boolean | null
@@ -133,6 +135,7 @@ export type Database = {
           protein_g: number | null
           secondary_tastes: Database["public"]["Enums"]["rasa_taste"][] | null
           temperature: Database["public"]["Enums"]["food_temperature"]
+          vipaka: string | null
           vitamin_a_mcg: number | null
           vitamin_c_mg: number | null
         }
@@ -145,8 +148,10 @@ export type Database = {
           cuisine_type?: string | null
           description?: string | null
           digestibility?: Database["public"]["Enums"]["digestibility"]
+          dosha_effects?: Json | null
           fat_g?: number | null
           fiber_g?: number | null
+          guna?: string[] | null
           id?: string
           iron_mg?: number | null
           is_active?: boolean | null
@@ -155,6 +160,7 @@ export type Database = {
           protein_g?: number | null
           secondary_tastes?: Database["public"]["Enums"]["rasa_taste"][] | null
           temperature?: Database["public"]["Enums"]["food_temperature"]
+          vipaka?: string | null
           vitamin_a_mcg?: number | null
           vitamin_c_mg?: number | null
         }
@@ -167,8 +173,10 @@ export type Database = {
           cuisine_type?: string | null
           description?: string | null
           digestibility?: Database["public"]["Enums"]["digestibility"]
+          dosha_effects?: Json | null
           fat_g?: number | null
           fiber_g?: number | null
+          guna?: string[] | null
           id?: string
           iron_mg?: number | null
           is_active?: boolean | null
@@ -177,6 +185,7 @@ export type Database = {
           protein_g?: number | null
           secondary_tastes?: Database["public"]["Enums"]["rasa_taste"][] | null
           temperature?: Database["public"]["Enums"]["food_temperature"]
+          vipaka?: string | null
           vitamin_a_mcg?: number | null
           vitamin_c_mg?: number | null
         }
