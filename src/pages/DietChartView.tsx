@@ -105,7 +105,10 @@ const DietChartView = () => {
   }
 
   const groupedItems = groupByMealType(dietItems);
-  const mealTypes = ["Breakfast", "Mid-Morning", "Lunch", "Evening Snack", "Dinner"];
+  
+  // Get unique meal types from actual data and capitalize for display
+  const uniqueMealTypes = [...new Set(dietItems.map(item => item.meal_type))];
+  const capitalizeFirst = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).replace(/_/g, ' ');
 
   return (
     <div className="min-h-screen bg-background">
@@ -154,7 +157,7 @@ const DietChartView = () => {
 
         {/* Meal Plans */}
         <div className="space-y-6">
-          {mealTypes.map((mealType) => {
+          {uniqueMealTypes.map((mealType) => {
             const items = groupedItems[mealType];
             if (!items || items.length === 0) return null;
 
@@ -163,7 +166,7 @@ const DietChartView = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Utensils className="h-5 w-5" />
-                    {mealType}
+                    {capitalizeFirst(mealType)}
                   </CardTitle>
                   {items[0].meal_time && (
                     <CardDescription>
