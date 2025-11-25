@@ -92,6 +92,18 @@ const DietChartView = () => {
     return colors[taste] || "bg-gray-100 text-gray-800";
   };
 
+  const getDoshaIcon = (effect: string) => {
+    if (effect === "increase" || effect === "+") return "↑";
+    if (effect === "decrease" || effect === "-") return "↓";
+    return "=";
+  };
+
+  const getDoshaColor = (effect: string) => {
+    if (effect === "increase" || effect === "+") return "text-red-600 dark:text-red-400";
+    if (effect === "decrease" || effect === "-") return "text-green-600 dark:text-green-400";
+    return "text-muted-foreground";
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -188,33 +200,90 @@ const DietChartView = () => {
                         </div>
 
                         {/* Ayurvedic Properties */}
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap gap-2">
-                            <Badge className={getTasteColor(item.foods.primary_taste)}>
-                              Primary: {item.foods.primary_taste}
-                            </Badge>
-                            {item.foods.secondary_tastes && item.foods.secondary_tastes.length > 0 && (
-                              <>
-                                {item.foods.secondary_tastes.map((taste: string, idx: number) => (
-                                  <Badge key={idx} variant="outline" className={getTasteColor(taste)}>
-                                    {taste}
-                                  </Badge>
-                                ))}
-                              </>
-                            )}
+                        <div className="space-y-3">
+                          {/* Rasa (Taste) */}
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground mb-1">Rasa (Taste)</p>
+                            <div className="flex flex-wrap gap-2">
+                              <Badge className={getTasteColor(item.foods.primary_taste)}>
+                                Primary: {item.foods.primary_taste}
+                              </Badge>
+                              {item.foods.secondary_tastes && item.foods.secondary_tastes.length > 0 && (
+                                <>
+                                  {item.foods.secondary_tastes.map((taste: string, idx: number) => (
+                                    <Badge key={idx} variant="outline" className={getTasteColor(taste)}>
+                                      {taste}
+                                    </Badge>
+                                  ))}
+                                </>
+                              )}
+                            </div>
                           </div>
 
-                          <div className="flex flex-wrap gap-2 text-xs">
-                            <Badge variant="secondary">
-                              {item.foods.temperature === "hot" ? "🔥 Hot" : item.foods.temperature === "cold" ? "❄️ Cold" : "⚖️ Neutral"}
-                            </Badge>
-                            <Badge variant="secondary">
-                              Digestibility: {item.foods.digestibility}
-                            </Badge>
-                            {item.foods.category && (
-                              <Badge variant="outline">{item.foods.category}</Badge>
-                            )}
+                          {/* Virya (Potency) & Digestibility */}
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground mb-1">Virya (Potency) & Agni</p>
+                            <div className="flex flex-wrap gap-2 text-xs">
+                              <Badge variant="secondary">
+                                {item.foods.temperature === "hot" ? "🔥 Hot" : item.foods.temperature === "cold" ? "❄️ Cold" : "⚖️ Neutral"}
+                              </Badge>
+                              <Badge variant="secondary">
+                                Digestibility: {item.foods.digestibility}
+                              </Badge>
+                              {item.foods.category && (
+                                <Badge variant="outline">{item.foods.category}</Badge>
+                              )}
+                            </div>
                           </div>
+
+                          {/* Vipaka (Post-digestive effect) */}
+                          {item.foods.vipaka && (
+                            <div>
+                              <p className="text-xs font-semibold text-muted-foreground mb-1">Vipaka (Post-digestive)</p>
+                              <Badge variant="outline">{item.foods.vipaka}</Badge>
+                            </div>
+                          )}
+
+                          {/* Guna (Qualities) */}
+                          {item.foods.guna && item.foods.guna.length > 0 && (
+                            <div>
+                              <p className="text-xs font-semibold text-muted-foreground mb-1">Guna (Qualities)</p>
+                              <div className="flex flex-wrap gap-1">
+                                {item.foods.guna.map((quality: string, idx: number) => (
+                                  <Badge key={idx} variant="outline" className="text-xs">
+                                    {quality}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Dosha Effects */}
+                          {item.foods.dosha_effects && (
+                            <div>
+                              <p className="text-xs font-semibold text-muted-foreground mb-1">Dosha Effects</p>
+                              <div className="flex gap-4 text-sm">
+                                <div className="flex items-center gap-1">
+                                  <span className="font-medium">Vata:</span>
+                                  <span className={getDoshaColor(item.foods.dosha_effects.vata)}>
+                                    {getDoshaIcon(item.foods.dosha_effects.vata)} {item.foods.dosha_effects.vata}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <span className="font-medium">Pitta:</span>
+                                  <span className={getDoshaColor(item.foods.dosha_effects.pitta)}>
+                                    {getDoshaIcon(item.foods.dosha_effects.pitta)} {item.foods.dosha_effects.pitta}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <span className="font-medium">Kapha:</span>
+                                  <span className={getDoshaColor(item.foods.dosha_effects.kapha)}>
+                                    {getDoshaIcon(item.foods.dosha_effects.kapha)} {item.foods.dosha_effects.kapha}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* Nutritional Info */}
