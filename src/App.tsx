@@ -14,6 +14,7 @@ import NewPatient from "./pages/NewPatient";
 import PatientDetail from "./pages/PatientDetail";
 import Foods from "./pages/Foods";
 import DietChartNew from "./pages/DietChartNew";
+import DietChartView from "./pages/DietChartView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -76,6 +77,14 @@ const App = () => (
             element={
               <RoleBasedRoute allowedRoles={["dietitian", "admin"]}>
                 <DietChartNew />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/diet-charts/:id"
+            element={
+              <RoleBasedRoute allowedRoles={["dietitian", "admin", "patient"]}>
+                <DietChartView />
               </RoleBasedRoute>
             }
           />
