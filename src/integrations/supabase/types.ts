@@ -134,6 +134,7 @@ export type Database = {
           primary_taste: Database["public"]["Enums"]["rasa_taste"]
           protein_g: number | null
           secondary_tastes: Database["public"]["Enums"]["rasa_taste"][] | null
+          suitable_for_meals: string[] | null
           temperature: Database["public"]["Enums"]["food_temperature"]
           vipaka: string | null
           vitamin_a_mcg: number | null
@@ -159,6 +160,7 @@ export type Database = {
           primary_taste: Database["public"]["Enums"]["rasa_taste"]
           protein_g?: number | null
           secondary_tastes?: Database["public"]["Enums"]["rasa_taste"][] | null
+          suitable_for_meals?: string[] | null
           temperature?: Database["public"]["Enums"]["food_temperature"]
           vipaka?: string | null
           vitamin_a_mcg?: number | null
@@ -184,6 +186,7 @@ export type Database = {
           primary_taste?: Database["public"]["Enums"]["rasa_taste"]
           protein_g?: number | null
           secondary_tastes?: Database["public"]["Enums"]["rasa_taste"][] | null
+          suitable_for_meals?: string[] | null
           temperature?: Database["public"]["Enums"]["food_temperature"]
           vipaka?: string | null
           vitamin_a_mcg?: number | null
