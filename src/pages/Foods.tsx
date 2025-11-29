@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Search, Flame, Snowflake, Wind } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const Foods = () => {
   const navigate = useNavigate();
@@ -58,6 +59,52 @@ const Foods = () => {
     return colors[taste] || "bg-gray-100 text-gray-800";
   };
 
+  // Calculate Ayurvedic distribution data
+  const tasteDistribution = foods.reduce((acc: any, food) => {
+    const taste = food.primary_taste;
+    acc[taste] = (acc[taste] || 0) + 1;
+    return acc;
+  }, {});
+
+  const tempDistribution = foods.reduce((acc: any, food) => {
+    const temp = food.temperature;
+    acc[temp] = (acc[temp] || 0) + 1;
+    return acc;
+  }, {});
+
+  const digestibilityDistribution = foods.reduce((acc: any, food) => {
+    const digest = food.digestibility;
+    acc[digest] = (acc[digest] || 0) + 1;
+    return acc;
+  }, {});
+
+  // Calculate dosha effects
+  const doshaEffects = foods.reduce((acc: any, food) => {
+    if (food.dosha_effects) {
+      ['vata', 'pitta', 'kapha'].forEach(dosha => {
+        const effect = food.dosha_effects[dosha];
+        if (!acc[dosha]) acc[dosha] = { increase: 0, decrease: 0, neutral: 0 };
+        if (effect === 'increase' || effect === '+') acc[dosha].increase++;
+        else if (effect === 'decrease' || effect === '-') acc[dosha].decrease++;
+        else acc[dosha].neutral++;
+      });
+    }
+    return acc;
+  }, {});
+
+  const tasteChartData = Object.entries(tasteDistribution).map(([name, value]) => ({ name, value }));
+  const tempChartData = Object.entries(tempDistribution).map(([name, value]) => ({ name, value }));
+  const digestChartData = Object.entries(digestibilityDistribution).map(([name, value]) => ({ name, value }));
+  
+  const doshaChartData = Object.entries(doshaEffects).map(([name, effects]: any) => ({
+    name: name.charAt(0).toUpperCase() + name.slice(1),
+    increase: effects.increase,
+    decrease: effects.decrease,
+    neutral: effects.neutral
+  }));
+
+  const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
@@ -76,6 +123,100 @@ const Foods = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* Ayurvedic Analytics Dashboard */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4">Ayurvedic Analytics</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Rasa (Taste) Distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Rasa (Taste) Distribution</CardTitle>
+                <CardDescription>Primary taste classification across all foods</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={tasteChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {tasteChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Dosha Effects */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Dosha Effects Distribution</CardTitle>
+                <CardDescription>Impact on Vata, Pitta, and Kapha doshas</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={doshaChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="increase" stackId="a" fill="hsl(var(--destructive))" name="Increase" />
+                    <Bar dataKey="neutral" stackId="a" fill="hsl(var(--muted))" name="Neutral" />
+                    <Bar dataKey="decrease" stackId="a" fill="hsl(var(--primary))" name="Decrease" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Virya (Temperature) */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Virya (Potency) Distribution</CardTitle>
+                <CardDescription>Hot, cold, and neutral properties</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={tempChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="hsl(var(--chart-2))" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Digestibility */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Agni (Digestibility)</CardTitle>
+                <CardDescription>Easy, moderate, and difficult to digest foods</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={digestChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="hsl(var(--chart-3))" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />

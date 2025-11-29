@@ -7,6 +7,7 @@ import { ArrowLeft, Calendar, Utensils } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 
 const DietChartView = () => {
   const navigate = useNavigate();
@@ -122,6 +123,72 @@ const DietChartView = () => {
   const uniqueMealTypes = [...new Set(dietItems.map(item => item.meal_type))];
   const capitalizeFirst = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).replace(/_/g, ' ');
 
+  // Calculate analytics
+  const mealCalories = uniqueMealTypes.map(mealType => {
+    const items = groupedItems[mealType] || [];
+    const totalCal = items.reduce((sum, item) => 
+      sum + Math.round((item.foods.calories_per_100g * item.quantity_grams) / 100), 0
+    );
+    return { name: capitalizeFirst(mealType), calories: totalCal };
+  });
+
+  const tasteDistribution = dietItems.reduce((acc: any, item) => {
+    const taste = item.foods.primary_taste;
+    acc[taste] = (acc[taste] || 0) + 1;
+    return acc;
+  }, {});
+  const tasteChartData = Object.entries(tasteDistribution).map(([name, value]) => ({ name, value }));
+
+  const nutritionTotals = dietItems.reduce((acc, item) => {
+    const multiplier = item.quantity_grams / 100;
+    return {
+      protein: acc.protein + (item.foods.protein_g || 0) * multiplier,
+      carbs: acc.carbs + (item.foods.carbs_g || 0) * multiplier,
+      fat: acc.fat + (item.foods.fat_g || 0) * multiplier,
+      fiber: acc.fiber + (item.foods.fiber_g || 0) * multiplier,
+    };
+  }, { protein: 0, carbs: 0, fat: 0, fiber: 0 });
+  const nutritionData = [
+    { name: 'Protein', value: nutritionTotals.protein.toFixed(1) },
+    { name: 'Carbs', value: nutritionTotals.carbs.toFixed(1) },
+    { name: 'Fat', value: nutritionTotals.fat.toFixed(1) },
+    { name: 'Fiber', value: nutritionTotals.fiber.toFixed(1) },
+  ];
+
+  // Dosha effect aggregation
+  const doshaAggregation = dietItems.reduce((acc: any, item) => {
+    if (item.foods.dosha_effects) {
+      ['vata', 'pitta', 'kapha'].forEach(dosha => {
+        const effect = item.foods.dosha_effects[dosha];
+        if (!acc[dosha]) acc[dosha] = { increase: 0, decrease: 0, neutral: 0 };
+        if (effect === 'increase' || effect === '+') acc[dosha].increase++;
+        else if (effect === 'decrease' || effect === '-') acc[dosha].decrease++;
+        else acc[dosha].neutral++;
+      });
+    }
+    return acc;
+  }, {});
+
+  const doshaRadarData = [
+    { 
+      dosha: 'Vata', 
+      increase: doshaAggregation.vata?.increase || 0,
+      decrease: doshaAggregation.vata?.decrease || 0
+    },
+    { 
+      dosha: 'Pitta', 
+      increase: doshaAggregation.pitta?.increase || 0,
+      decrease: doshaAggregation.pitta?.decrease || 0
+    },
+    { 
+      dosha: 'Kapha', 
+      increase: doshaAggregation.kapha?.increase || 0,
+      decrease: doshaAggregation.kapha?.decrease || 0
+    },
+  ];
+
+  const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
@@ -165,6 +232,102 @@ const DietChartView = () => {
               <p className="text-sm text-muted-foreground">{dietChart.notes}</p>
             </CardContent>
           </Card>
+        )}
+
+        {/* Diet Chart Analytics */}
+        {dietItems.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">Diet Chart Analytics</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Meal-wise Calorie Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Calorie Distribution by Meal</CardTitle>
+                  <CardDescription>Total calories per meal type</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={mealCalories}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="calories" fill="hsl(var(--chart-1))" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Taste Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Rasa (Taste) Balance</CardTitle>
+                  <CardDescription>Distribution of primary tastes</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={tasteChartData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {tasteChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Dosha Effects Radar */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Dosha Impact Profile</CardTitle>
+                  <CardDescription>Overall dosha balancing effects</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <RadarChart data={doshaRadarData}>
+                      <PolarGrid />
+                      <PolarAngleAxis dataKey="dosha" />
+                      <PolarRadiusAxis />
+                      <Radar name="Increase" dataKey="increase" stroke="hsl(var(--destructive))" fill="hsl(var(--destructive))" fillOpacity={0.6} />
+                      <Radar name="Decrease" dataKey="decrease" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.6} />
+                      <Legend />
+                      <Tooltip />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Nutritional Breakdown */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Total Macronutrients (grams)</CardTitle>
+                  <CardDescription>Daily nutritional breakdown</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={nutritionData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="value" fill="hsl(var(--chart-3))" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         )}
 
         {/* Meal Plans */}
