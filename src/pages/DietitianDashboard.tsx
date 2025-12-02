@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, BookOpen, FileText, Leaf, LogOut, Sparkles } from "lucide-react";
+import { Users, BookOpen, FileText, Leaf, LogOut, Sparkles, ClipboardList, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
 const DietitianDashboard = () => {
@@ -176,6 +176,38 @@ const DietitianDashboard = () => {
               <Button className="w-full" onClick={() => navigate("/diet-charts/new")}>
                 <FileText className="mr-2 h-4 w-4" />
                 Create New Diet Chart
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ClipboardList className="h-5 w-5 text-primary" />
+                Dosha Assessment Quiz
+              </CardTitle>
+              <CardDescription>Help patients discover their Ayurvedic constitution</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full" onClick={() => navigate("/dosha-quiz")}>
+                <ClipboardList className="mr-2 h-4 w-4" />
+                Start Quiz
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                Weekly Meal Calendar
+              </CardTitle>
+              <CardDescription>Drag and drop AI-suggested meals across days</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full" onClick={() => navigate("/meal-calendar")}>
+                <Calendar className="mr-2 h-4 w-4" />
+                Open Calendar
               </Button>
             </CardContent>
           </Card>
