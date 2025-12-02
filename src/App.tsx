@@ -15,6 +15,7 @@ import PatientDetail from "./pages/PatientDetail";
 import Foods from "./pages/Foods";
 import DietChartNew from "./pages/DietChartNew";
 import DietChartView from "./pages/DietChartView";
+import AyurvedicAssistant from "./pages/AyurvedicAssistant";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -105,6 +106,14 @@ const App = () => (
             element={
               <RoleBasedRoute allowedRoles={["admin", "dietitian", "patient"]}>
                 <Foods />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/ayurvedic-assistant"
+            element={
+              <RoleBasedRoute allowedRoles={["admin", "dietitian", "patient"]}>
+                <AyurvedicAssistant />
               </RoleBasedRoute>
             }
           />

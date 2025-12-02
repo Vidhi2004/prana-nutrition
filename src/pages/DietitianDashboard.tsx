@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, BookOpen, FileText, Leaf, LogOut } from "lucide-react";
+import { Users, BookOpen, FileText, Leaf, LogOut, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 const DietitianDashboard = () => {
@@ -167,7 +167,7 @@ const DietitianDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="md:col-span-2">
+          <Card>
             <CardHeader>
               <CardTitle>Create Diet Chart</CardTitle>
               <CardDescription>Design personalized Ayurvedic meal plans</CardDescription>
@@ -176,6 +176,22 @@ const DietitianDashboard = () => {
               <Button className="w-full" onClick={() => navigate("/diet-charts/new")}>
                 <FileText className="mr-2 h-4 w-4" />
                 Create New Diet Chart
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-2 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                AI Ayurvedic Assistant
+              </CardTitle>
+              <CardDescription>Get AI-powered meal planning and dosha-based food recommendations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full" onClick={() => navigate("/ayurvedic-assistant")}>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Open AI Assistant
               </Button>
             </CardContent>
           </Card>
