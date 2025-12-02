@@ -16,6 +16,8 @@ import Foods from "./pages/Foods";
 import DietChartNew from "./pages/DietChartNew";
 import DietChartView from "./pages/DietChartView";
 import AyurvedicAssistant from "./pages/AyurvedicAssistant";
+import DoshaQuiz from "./pages/DoshaQuiz";
+import MealCalendar from "./pages/MealCalendar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -114,6 +116,22 @@ const App = () => (
             element={
               <RoleBasedRoute allowedRoles={["admin", "dietitian", "patient"]}>
                 <AyurvedicAssistant />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/dosha-quiz"
+            element={
+              <RoleBasedRoute allowedRoles={["admin", "dietitian", "patient"]}>
+                <DoshaQuiz />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/meal-calendar"
+            element={
+              <RoleBasedRoute allowedRoles={["admin", "dietitian"]}>
+                <MealCalendar />
               </RoleBasedRoute>
             }
           />
