@@ -1,1 +1,4 @@
 project_id = "nxkqiqxoeyabctyiayms"
+
+[functions.ayurvedic-assistant]
+verify_jwt = false
