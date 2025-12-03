@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Trash2, GripVertical } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Trash2, GripVertical, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -22,6 +22,7 @@ interface MealSlot {
   id: string;
   food: Food;
   quantity: number;
+  dbId?: string;
 }
 
 interface DayMeals {
@@ -45,10 +46,28 @@ const MealCalendar = () => {
   const [aiSuggestions, setAiSuggestions] = useState<Food[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [draggedFood, setDraggedFood] = useState<Food | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    checkAuth();
     fetchFoods();
   }, []);
+
+  useEffect(() => {
+    if (userId) {
+      loadSavedMeals();
+    }
+  }, [weekOffset, userId]);
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setUserId(user.id);
+    } else {
+      setIsLoading(false);
+    }
+  };
 
   const fetchFoods = async () => {
     const { data, error } = await supabase
@@ -62,6 +81,66 @@ const MealCalendar = () => {
       return;
     }
     setFoods(data || []);
+  };
+
+  const loadSavedMeals = async () => {
+    if (!userId) return;
+    
+    setIsLoading(true);
+    const startDate = getDateKey(weekDates[0]);
+    const endDate = getDateKey(weekDates[6]);
+
+    const { data, error } = await supabase
+      .from("meal_calendar")
+      .select(`
+        id,
+        meal_date,
+        meal_type,
+        food_id,
+        quantity_grams,
+        sort_order,
+        foods (
+          id,
+          name,
+          category,
+          calories_per_100g,
+          primary_taste,
+          dosha_effects
+        )
+      `)
+      .eq("practitioner_id", userId)
+      .gte("meal_date", startDate)
+      .lte("meal_date", endDate)
+      .order("sort_order");
+
+    if (error) {
+      console.error("Error loading meals:", error);
+      setIsLoading(false);
+      return;
+    }
+
+    const mealsMap: Record<string, DayMeals> = {};
+    
+    data?.forEach((item) => {
+      const dateKey = item.meal_date;
+      const mealType = item.meal_type as MealType;
+      
+      if (!mealsMap[dateKey]) {
+        mealsMap[dateKey] = { breakfast: [], lunch: [], dinner: [], snacks: [] };
+      }
+
+      if (item.foods && MEAL_TYPES.includes(mealType)) {
+        mealsMap[dateKey][mealType].push({
+          id: `${item.food_id}-${item.id}`,
+          dbId: item.id,
+          food: item.foods as unknown as Food,
+          quantity: item.quantity_grams,
+        });
+      }
+    });
+
+    setWeekMeals(mealsMap);
+    setIsLoading(false);
   };
 
   const getWeekDates = () => {
@@ -145,8 +224,17 @@ const MealCalendar = () => {
     e.preventDefault();
   };
 
-  const handleDrop = (dateKey: string, mealType: MealType) => {
-    if (!draggedFood) return;
+  const handleDrop = async (dateKey: string, mealType: MealType) => {
+    if (!draggedFood || !userId) {
+      if (!userId) toast.error("Please log in to save meals");
+      return;
+    }
+
+    const newMealSlot: MealSlot = {
+      id: `${draggedFood.id}-${Date.now()}`,
+      food: draggedFood,
+      quantity: 100,
+    };
 
     setWeekMeals((prev) => {
       const dayMeals = prev[dateKey] || {
@@ -154,12 +242,6 @@ const MealCalendar = () => {
         lunch: [],
         dinner: [],
         snacks: [],
-      };
-
-      const newMealSlot: MealSlot = {
-        id: `${draggedFood.id}-${Date.now()}`,
-        food: draggedFood,
-        quantity: 100,
       };
 
       return {
@@ -171,11 +253,44 @@ const MealCalendar = () => {
       };
     });
 
+    const { data, error } = await supabase
+      .from("meal_calendar")
+      .insert({
+        practitioner_id: userId,
+        meal_date: dateKey,
+        meal_type: mealType,
+        food_id: draggedFood.id,
+        quantity_grams: 100,
+        sort_order: weekMeals[dateKey]?.[mealType]?.length || 0,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast.error("Failed to save meal");
+      loadSavedMeals();
+    } else {
+      setWeekMeals((prev) => {
+        const dayMeals = prev[dateKey];
+        if (!dayMeals) return prev;
+
+        return {
+          ...prev,
+          [dateKey]: {
+            ...dayMeals,
+            [mealType]: dayMeals[mealType].map((slot) =>
+              slot.id === newMealSlot.id ? { ...slot, dbId: data.id } : slot
+            ),
+          },
+        };
+      });
+      toast.success(`Added ${draggedFood.name} to ${mealType}`);
+    }
+
     setDraggedFood(null);
-    toast.success(`Added ${draggedFood.name} to ${mealType}`);
   };
 
-  const removeMealItem = (dateKey: string, mealType: MealType, slotId: string) => {
+  const removeMealItem = async (dateKey: string, mealType: MealType, slotId: string, dbId?: string) => {
     setWeekMeals((prev) => {
       const dayMeals = prev[dateKey];
       if (!dayMeals) return prev;
@@ -188,6 +303,20 @@ const MealCalendar = () => {
         },
       };
     });
+
+    if (dbId) {
+      const { error } = await supabase
+        .from("meal_calendar")
+        .delete()
+        .eq("id", dbId);
+
+      if (error) {
+        toast.error("Failed to remove meal");
+        loadSavedMeals();
+      } else {
+        toast.success("Meal removed");
+      }
+    }
   };
 
   const calculateDayCalories = (dateKey: string) => {
@@ -199,15 +328,6 @@ const MealCalendar = () => {
         return mealTotal + (slot.food.calories_per_100g * slot.quantity) / 100;
       }, 0);
     }, 0);
-  };
-
-  const getDoshaColor = (dosha: string) => {
-    switch (dosha) {
-      case "vata": return "bg-purple-500/10 text-purple-700 border-purple-200";
-      case "pitta": return "bg-orange-500/10 text-orange-700 border-orange-200";
-      case "kapha": return "bg-green-500/10 text-green-700 border-green-200";
-      default: return "bg-muted";
-    }
   };
 
   return (
@@ -295,87 +415,93 @@ const MealCalendar = () => {
 
         {/* Calendar Grid */}
         <div className="overflow-x-auto">
-          <div className="min-w-[800px]">
-            {/* Header */}
-            <div className="grid grid-cols-8 gap-2 mb-2">
-              <div className="p-2 font-semibold text-sm text-muted-foreground">Meal</div>
-              {weekDates.map((date, index) => (
-                <div key={index} className="p-2 text-center">
-                  <p className="font-semibold text-sm">{DAYS_OF_WEEK[index]}</p>
-                  <p className="text-xs text-muted-foreground">{formatDate(date)}</p>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="min-w-[800px]">
+              {/* Header */}
+              <div className="grid grid-cols-8 gap-2 mb-2">
+                <div className="p-2 font-semibold text-sm text-muted-foreground">Meal</div>
+                {weekDates.map((date, index) => (
+                  <div key={index} className="p-2 text-center">
+                    <p className="font-semibold text-sm">{DAYS_OF_WEEK[index]}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(date)}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Meal Rows */}
+              {MEAL_TYPES.map((mealType) => (
+                <div key={mealType} className="grid grid-cols-8 gap-2 mb-2">
+                  <div className="p-3 bg-muted/50 rounded-lg flex items-center">
+                    <span className="font-medium text-sm capitalize">{mealType}</span>
+                  </div>
+                  {weekDates.map((date) => {
+                    const dateKey = getDateKey(date);
+                    const meals = weekMeals[dateKey]?.[mealType] || [];
+
+                    return (
+                      <div
+                        key={dateKey}
+                        onDragOver={handleDragOver}
+                        onDrop={() => handleDrop(dateKey, mealType)}
+                        className="min-h-[100px] p-2 border-2 border-dashed border-muted rounded-lg hover:border-primary/50 hover:bg-muted/30 transition-colors"
+                      >
+                        <div className="space-y-1">
+                          {meals.map((slot) => (
+                            <div
+                              key={slot.id}
+                              className="p-2 bg-primary/10 rounded text-xs group relative"
+                            >
+                              <p className="font-medium truncate pr-5">{slot.food.name}</p>
+                              <p className="text-muted-foreground">
+                                {slot.food.calories_per_100g} kcal
+                              </p>
+                              <button
+                                onClick={() => removeMealItem(dateKey, mealType, slot.id, slot.dbId)}
+                                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/20 rounded transition-opacity"
+                              >
+                                <Trash2 className="h-3 w-3 text-destructive" />
+                              </button>
+                            </div>
+                          ))}
+                          {meals.length === 0 && (
+                            <p className="text-xs text-muted-foreground text-center py-4">
+                              Drop food here
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ))}
-            </div>
 
-            {/* Meal Rows */}
-            {MEAL_TYPES.map((mealType) => (
-              <div key={mealType} className="grid grid-cols-8 gap-2 mb-2">
-                <div className="p-3 bg-muted/50 rounded-lg flex items-center">
-                  <span className="font-medium text-sm capitalize">{mealType}</span>
+              {/* Calorie Summary Row */}
+              <div className="grid grid-cols-8 gap-2 mt-4">
+                <div className="p-3 bg-primary/10 rounded-lg flex items-center">
+                  <span className="font-semibold text-sm">Total Calories</span>
                 </div>
                 {weekDates.map((date) => {
                   const dateKey = getDateKey(date);
-                  const meals = weekMeals[dateKey]?.[mealType] || [];
+                  const calories = calculateDayCalories(dateKey);
 
                   return (
                     <div
                       key={dateKey}
-                      onDragOver={handleDragOver}
-                      onDrop={() => handleDrop(dateKey, mealType)}
-                      className="min-h-[100px] p-2 border-2 border-dashed border-muted rounded-lg hover:border-primary/50 hover:bg-muted/30 transition-colors"
+                      className="p-3 bg-primary/10 rounded-lg text-center"
                     >
-                      <div className="space-y-1">
-                        {meals.map((slot) => (
-                          <div
-                            key={slot.id}
-                            className="p-2 bg-primary/10 rounded text-xs group relative"
-                          >
-                            <p className="font-medium truncate pr-5">{slot.food.name}</p>
-                            <p className="text-muted-foreground">
-                              {slot.food.calories_per_100g} kcal
-                            </p>
-                            <button
-                              onClick={() => removeMealItem(dateKey, mealType, slot.id)}
-                              className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/20 rounded transition-opacity"
-                            >
-                              <Trash2 className="h-3 w-3 text-destructive" />
-                            </button>
-                          </div>
-                        ))}
-                        {meals.length === 0 && (
-                          <p className="text-xs text-muted-foreground text-center py-4">
-                            Drop food here
-                          </p>
-                        )}
-                      </div>
+                      <span className="font-bold text-primary">
+                        {Math.round(calories)} kcal
+                      </span>
                     </div>
                   );
                 })}
               </div>
-            ))}
-
-            {/* Calorie Summary Row */}
-            <div className="grid grid-cols-8 gap-2 mt-4">
-              <div className="p-3 bg-primary/10 rounded-lg flex items-center">
-                <span className="font-semibold text-sm">Total Calories</span>
-              </div>
-              {weekDates.map((date) => {
-                const dateKey = getDateKey(date);
-                const calories = calculateDayCalories(dateKey);
-
-                return (
-                  <div
-                    key={dateKey}
-                    className="p-3 bg-primary/10 rounded-lg text-center"
-                  >
-                    <span className="font-bold text-primary">
-                      {Math.round(calories)} kcal
-                    </span>
-                  </div>
-                );
-              })}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

@@ -194,6 +194,53 @@ export type Database = {
         }
         Relationships: []
       }
+      meal_calendar: {
+        Row: {
+          created_at: string
+          food_id: string
+          id: string
+          meal_date: string
+          meal_type: string
+          patient_id: string | null
+          practitioner_id: string
+          quantity_grams: number
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          food_id: string
+          id?: string
+          meal_date: string
+          meal_type: string
+          patient_id?: string | null
+          practitioner_id: string
+          quantity_grams?: number
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          food_id?: string
+          id?: string
+          meal_date?: string
+          meal_type?: string
+          patient_id?: string | null
+          practitioner_id?: string
+          quantity_grams?: number
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_calendar_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           age: number
