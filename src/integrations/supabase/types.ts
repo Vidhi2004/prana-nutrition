@@ -241,6 +241,84 @@ export type Database = {
           },
         ]
       }
+      meal_plan_template_items: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          food_id: string
+          id: string
+          meal_type: string
+          quantity_grams: number
+          sort_order: number | null
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          food_id: string
+          id?: string
+          meal_type: string
+          quantity_grams?: number
+          sort_order?: number | null
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          food_id?: string
+          id?: string
+          meal_type?: string
+          quantity_grams?: number
+          sort_order?: number | null
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_plan_template_items_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_plan_template_items_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "meal_plan_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meal_plan_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          dosha_target: string | null
+          id: string
+          name: string
+          practitioner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          dosha_target?: string | null
+          id?: string
+          name: string
+          practitioner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          dosha_target?: string | null
+          id?: string
+          name?: string
+          practitioner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       patients: {
         Row: {
           age: number
