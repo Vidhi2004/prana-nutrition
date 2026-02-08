@@ -12,6 +12,7 @@ import { Leaf } from "lucide-react";
 const Auth = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [signupRole, setSignupRole] = useState<"dietitian" | "patient">("dietitian");
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,7 +27,10 @@ const Auth = () => {
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: { 
+          full_name: fullName,
+          role: signupRole
+        },
         emailRedirectTo: `${window.location.origin}/`,
       },
     });
@@ -48,18 +52,37 @@ const Auth = () => {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
+    if (error) {
+      setIsLoading(false);
+      toast.error(error.message);
+      return;
+    }
+
+    // Get user role and redirect appropriately
+    const { data: userRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.user.id)
+      .single();
+
     setIsLoading(false);
 
-    if (error) {
-      toast.error(error.message);
-    } else {
+    if (userRole) {
       toast.success("Signed in successfully!");
-      navigate("/dashboard");
+      if (userRole.role === "admin") {
+        navigate("/admin");
+      } else if (userRole.role === "dietitian") {
+        navigate("/dashboard");
+      } else if (userRole.role === "patient") {
+        navigate("/patient");
+      }
+    } else {
+      toast.error("User role not found. Please contact support.");
     }
   };
 
@@ -83,7 +106,7 @@ const Auth = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Welcome Back</CardTitle>
-                <CardDescription>Sign in to your practitioner account</CardDescription>
+                <CardDescription>Sign in to your account</CardDescription>
               </CardHeader>
               <form onSubmit={handleSignIn}>
                 <CardContent className="space-y-4">
@@ -93,7 +116,7 @@ const Auth = () => {
                       id="signin-email"
                       name="email"
                       type="email"
-                      placeholder="practitioner@example.com"
+                      placeholder="your@email.com"
                       required
                     />
                   </div>
@@ -120,17 +143,50 @@ const Auth = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Create Account</CardTitle>
-                <CardDescription>Register as an Ayurvedic practitioner</CardDescription>
+                <CardDescription>Register for AyurDiet</CardDescription>
               </CardHeader>
               <form onSubmit={handleSignUp}>
                 <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-role">I am a</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setSignupRole("dietitian")}
+                        className={`p-4 border-2 rounded-lg text-left transition-all ${
+                          signupRole === "dietitian"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="font-semibold">Dietitian</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Manage patients & create diet plans
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSignupRole("patient")}
+                        className={`p-4 border-2 rounded-lg text-left transition-all ${
+                          signupRole === "patient"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="font-semibold">Patient</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          View my diet plans & health info
+                        </div>
+                      </button>
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-name">Full Name</Label>
                     <Input
                       id="signup-name"
                       name="fullName"
                       type="text"
-                      placeholder="Dr. Your Name"
+                      placeholder={signupRole === "dietitian" ? "Dr. Your Name" : "Your Name"}
                       required
                     />
                   </div>
@@ -140,7 +196,7 @@ const Auth = () => {
                       id="signup-email"
                       name="email"
                       type="email"
-                      placeholder="practitioner@example.com"
+                      placeholder="your@email.com"
                       required
                     />
                   </div>
